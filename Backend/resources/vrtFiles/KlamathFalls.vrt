@@ -1,0 +1,58 @@
+<VRTDataset rasterXSize="16878" rasterYSize="12569">
+  <SRS dataAxisToSRSAxisMapping="1,2">PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]</SRS>
+  <GeoTransform> -1.3914852287198698e+07,  5.5223724735935193e+01,  0.0000000000000000e+00,  5.5601395437173229e+06,  0.0000000000000000e+00, -5.5224644343710516e+01</GeoTransform>
+  <Metadata>
+    <MDI key="AREA_OR_POINT">Area</MDI>
+    <MDI key="TIFFTAG_DATETIME">2025:10:09 15:59:25</MDI>
+    <MDI key="TIFFTAG_RESOLUTIONUNIT">2 (pixels/inch)</MDI>
+    <MDI key="TIFFTAG_SOFTWARE">Adobe Photoshop 25.5 (Windows)</MDI>
+    <MDI key="TIFFTAG_XRESOLUTION">300</MDI>
+    <MDI key="TIFFTAG_YRESOLUTION">300</MDI>
+  </Metadata>
+  <Metadata domain="IMAGE_STRUCTURE">
+    <MDI key="INTERLEAVE">PIXEL</MDI>
+  </Metadata>
+  <VRTRasterBand dataType="Byte" band="1" blockXSize="16878" blockYSize="1">
+    <ColorInterp>Red</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">C:\Users\micro\Documents\Projects\FlightPlanner\Backend\resources\sectionals\KlamathFalls\KlamathFallsCropped.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="16878" RasterYSize="12569" DataType="Byte" BlockXSize="16878" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <DstRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <ColorTableComponent>1</ColorTableComponent>
+    </ComplexSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2" blockXSize="16878" blockYSize="1">
+    <ColorInterp>Green</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">C:\Users\micro\Documents\Projects\FlightPlanner\Backend\resources\sectionals\KlamathFalls\KlamathFallsCropped.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="16878" RasterYSize="12569" DataType="Byte" BlockXSize="16878" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <DstRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <ColorTableComponent>2</ColorTableComponent>
+    </ComplexSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3" blockXSize="16878" blockYSize="1">
+    <ColorInterp>Blue</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">C:\Users\micro\Documents\Projects\FlightPlanner\Backend\resources\sectionals\KlamathFalls\KlamathFallsCropped.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="16878" RasterYSize="12569" DataType="Byte" BlockXSize="16878" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <DstRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <ColorTableComponent>3</ColorTableComponent>
+    </ComplexSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="4" blockXSize="16878" blockYSize="1">
+    <ColorInterp>Alpha</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">C:\Users\micro\Documents\Projects\FlightPlanner\Backend\resources\sectionals\KlamathFalls\KlamathFallsCropped.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+      <SourceProperties RasterXSize="16878" RasterYSize="12569" DataType="Byte" BlockXSize="16878" BlockYSize="1" />
+      <SrcRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <DstRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>

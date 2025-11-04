@@ -1,0 +1,80 @@
+<VRTDataset rasterXSize="16961" rasterYSize="24870">
+  <SRS dataAxisToSRSAxisMapping="1,2">PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]</SRS>
+  <GeoTransform> -1.3914852287198698e+07,  5.7274152604835905e+01,  0.0000000000000000e+00,  6.2904193921365449e+06,  0.0000000000000000e+00, -5.7274868833780758e+01</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Red</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">KlamathFalls.vrt</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="16878" RasterYSize="12569" DataType="Byte" BlockXSize="128" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <DstRect xOff="0" yOff="12750.4412194918" xSize="16273.7637084554" ySize="12119.0771605348" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">Seattle.vrt</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="16375" RasterYSize="12847" DataType="Byte" BlockXSize="16375" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="16374.5966605078" ySize="12847" />
+      <DstRect xOff="0.189003570620024" yOff="0" xSize="16960.8109964294" ySize="13306.8741919492" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <ColorInterp>Green</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">KlamathFalls.vrt</SourceFilename>
+      <SourceBand>2</SourceBand>
+      <SourceProperties RasterXSize="16878" RasterYSize="12569" DataType="Byte" BlockXSize="128" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <DstRect xOff="0" yOff="12750.4412194918" xSize="16273.7637084554" ySize="12119.0771605348" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">Seattle.vrt</SourceFilename>
+      <SourceBand>2</SourceBand>
+      <SourceProperties RasterXSize="16375" RasterYSize="12847" DataType="Byte" BlockXSize="16375" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="16374.5966605078" ySize="12847" />
+      <DstRect xOff="0.189003570620024" yOff="0" xSize="16960.8109964294" ySize="13306.8741919492" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+    <ColorInterp>Blue</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">KlamathFalls.vrt</SourceFilename>
+      <SourceBand>3</SourceBand>
+      <SourceProperties RasterXSize="16878" RasterYSize="12569" DataType="Byte" BlockXSize="128" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <DstRect xOff="0" yOff="12750.4412194918" xSize="16273.7637084554" ySize="12119.0771605348" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">Seattle.vrt</SourceFilename>
+      <SourceBand>3</SourceBand>
+      <SourceProperties RasterXSize="16375" RasterYSize="12847" DataType="Byte" BlockXSize="16375" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="16374.5966605078" ySize="12847" />
+      <DstRect xOff="0.189003570620024" yOff="0" xSize="16960.8109964294" ySize="13306.8741919492" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="4">
+    <ColorInterp>Alpha</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">KlamathFalls.vrt</SourceFilename>
+      <SourceBand>4</SourceBand>
+      <SourceProperties RasterXSize="16878" RasterYSize="12569" DataType="Byte" BlockXSize="128" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="16878" ySize="12569" />
+      <DstRect xOff="0" yOff="12750.4412194918" xSize="16273.7637084554" ySize="12119.0771605348" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">Seattle.vrt</SourceFilename>
+      <SourceBand>4</SourceBand>
+      <SourceProperties RasterXSize="16375" RasterYSize="12847" DataType="Byte" BlockXSize="16375" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="16374.5966605078" ySize="12847" />
+      <DstRect xOff="0.189003570620024" yOff="0" xSize="16960.8109964294" ySize="13306.8741919492" />
+      <UseMaskBand>true</UseMaskBand>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>
