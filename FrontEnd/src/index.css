@@ -31,3 +31,18 @@ button {
   border-radius: 8px;
   box-shadow: 0 6px 18px rgba(2,6,23,0.6);
 }
+
+/* Positions table styling */
+.positions-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.positions-table th,
+.positions-table td {
+  border: 1px solid #000; /* black borders */
+  padding: 8px;
+  text-align: left;
+}
+.positions-table thead th {
+  background: rgba(0,0,0,0.05);
+}
