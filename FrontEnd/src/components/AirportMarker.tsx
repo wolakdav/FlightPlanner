@@ -6,6 +6,7 @@ interface AirportMarkerProps {
   airportData : Airport;
 }
 
+
 async function getDetailedAirportInfo(icao_id: string): Promise<[number, number][][]> {
   return await fetch(`http://localhost:5000/detailedAirportInfo?icao_id=${icao_id}`)
   .then(response => response.json())
@@ -21,15 +22,27 @@ async function getDetailedAirportInfo(icao_id: string): Promise<[number, number]
   });
 }
 
-function AirportDetails({ airportData }: { airportData: Airport }) {
-  
-
-  return (<>
-    <div>Airport Name: {airportData.id}</div>
-    <div>Type: {airportData.type}</div>
-    
-  
-  </>)
+function AirportDetails(color, airportData: Airport) {
+  return L.divIcon({
+    html: `
+      <div style="
+        background: ${color};;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border: 2px solid white;
+      ">
+        ${airportData.id} - ${airportData.name}
+      </div>
+    `,
+    className: '', // prevents Leaflet default styles
+    iconSize: [30, 30],
+  })
 }
 
 function DisplayAirspace({ airportData }: { airportData: Airport }) {
@@ -54,7 +67,6 @@ function DisplayAirspace({ airportData }: { airportData: Airport }) {
 
 function AirportMarker( { airportData }: AirportMarkerProps) {
   const [showDetails, setShowDetails] = useState(false)
-  console.log("Show deets ", showDetails)
   
   let color = "blue"
   if(airportData.private) {
@@ -62,14 +74,12 @@ function AirportMarker( { airportData }: AirportMarkerProps) {
   }
 
   return (<>
-      <CircleMarker center={[airportData.lat, airportData.lon]} radius={20} pathOptions={{ color: color }} eventHandlers={{
+      <Marker position={[airportData.lat, airportData.lon]} icon={AirportDetails(color, airportData)} eventHandlers={{
           click: () => setShowDetails(!showDetails)
         }}>
         {showDetails && <DisplayAirspace airportData={airportData}/>}
-        <Popup autoClose={true}>
-          <AirportDetails airportData={airportData}/>
-        </Popup>
-      </CircleMarker>
+
+      </Marker>
     </>
   );
 }

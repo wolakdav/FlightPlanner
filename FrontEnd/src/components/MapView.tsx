@@ -35,6 +35,7 @@ function AirportMarkers() {
           
             const newAirport = {} as Airport
             newAirport.id = airport.icao_id
+            newAirport.name = airport.name
             newAirport.type = airport.type
             newAirport.private = airport.private
             newAirport.lat = airport.latitude
