@@ -3,6 +3,7 @@ from arcgis.features import FeatureLayer
 from arcgis.geometry import Envelope
 from arcgis.geometry.filters import intersects
 
+import json
 import redis
 import requests
 
@@ -26,21 +27,30 @@ def detailed_airport_info():
         return jsonify()
 
     print("Querying for ICAO ID: ", icao_id)
-    result = airspace_client.query(
-        where=f"ICAO_ID = '{icao_id}'",
-        out_fields="",
-        out_sr=4326,
-        return_geometry=True
-    )
+    airSpaceGeometry = redis.get(icao_id)
 
-    allAirspaces = []
-    for feature in result.features:
-        allAirspaces.append(feature.geometry['rings'][0])
+    if(airSpaceGeometry is None):
+        result = airspace_client.query(
+            where=f"ICAO_ID = '{icao_id}'",
+            out_fields="",
+            out_sr=4326,
+            return_geometry=True
+        )
 
-    longLatFlipper.flipLatToLong(allAirspaces)
+        allAirspaces = []
+        for feature in result.features:
+            allAirspaces.append(feature.geometry['rings'][0])
 
-    responseBody = {'geometry': allAirspaces}
-    response = jsonify(responseBody)
+        longLatFlipper.flipLatToLong(allAirspaces)
+
+        airSpaceGeometry = {'geometry': allAirspaces}
+        
+        redis.set(icao_id, json.dumps(airSpaceGeometry))
+    else:
+        airSpaceGeometry = json.loads(airSpaceGeometry)
+
+
+    response = jsonify(airSpaceGeometry)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
