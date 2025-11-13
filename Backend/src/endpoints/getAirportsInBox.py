@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
-from arcgis.gis import GIS
 from arcgis.features import FeatureLayer
+from arcgis.geometry import Envelope
+from arcgis.geometry.filters import intersects
+
 import redis
 import requests
 
@@ -11,7 +13,10 @@ app = Flask(__name__)
 redis = redis.from_url("redis://localhost")
 ## This middle thing is prb a key. Gotta figure out later.
 airspace_layer_url = "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/Class_Airspace/FeatureServer/0"
+airport_layer_url = "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/US_Airport/FeatureServer/0"
+
 airspace_client = FeatureLayer(airspace_layer_url)
+airport_client = FeatureLayer(airport_layer_url)
 
 @app.route('/detailedAirportInfo', methods=['GET'])
 def detailed_airport_info():
@@ -42,27 +47,46 @@ def detailed_airport_info():
 
 @app.route('/airportsInBox', methods=['GET'])
 def get_airports_in_box():
-    long = float(request.args.get('long'))
-    lat = float(request.args.get('lat'))
-    width = float(request.args.get('width'))
-    height = float(request.args.get('height'))
-    results = redis.geosearch("airports",
-                              unit="km",
-                              longitude=long,
-                              latitude=lat,
-                              width=width,
-                                height=height,  
-                                withcoord=True
-    )
-    
+
+    xmin = float(request.args.get('xmin'))
+    ymin = float(request.args.get('ymin'))
+    xmax = float(request.args.get('xmax'))
+    ymax = float(request.args.get('ymax'))
+
+    boundedBox = Envelope({
+        "xmin": xmin,
+        "ymin": ymin,
+        "xmax": xmax,
+        "ymax": ymax,
+        "spatialReference": {"wkid": 4326}
+    })
+
+    result = airport_client.query(
+        where="1=1",
+        out_fields="*",
+        geometry_filter=intersects(boundedBox)
+    )    
+
+    ##print(result)
+    print("---")
     airports = []
-    for airport in results:
-        print(airport)
-        airports.append({
-            "id": airport[0].decode('utf-8'),
-            "longitude": airport[1][0],
-            "latitude": airport[1][1]
-        })
+    for airport in result:
+        airportIdent = airport.attributes["ICAO_ID"]
+        if(airportIdent is None):
+            airportIdent = airport.attributes["IDENT"]
+
+        type_code = airport.attributes["TYPE_CODE"]
+
+        if(airport.attributes["OPERSTATUS"] == "OPERATIONAL" and type_code != "HP" ):
+            airports.append({
+                "icao_id": airportIdent,
+                "longitude": airport.geometry["x"],
+                "latitude": airport.geometry["y"],
+                "type": airport.attributes["TYPE_CODE"],
+                "name": airport.attributes["NAME"],
+                "private": airport.attributes["PRIVATEUSE"]
+            })
+
 
     response = jsonify({'airports': airports})
     response.headers.add('Access-Control-Allow-Origin', '*')

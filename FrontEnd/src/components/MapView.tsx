@@ -7,6 +7,7 @@ import PositionsList from './PositionsList'
 import { Position } from '../common/common'
 import "leaflet/dist/leaflet.css";
 import AirportMarker from './AirportMarker'
+import { Airport } from '../common/common'
 
 function boxFromCorners(sw: LatLng, ne: LatLng) {
   const centerLon = (sw.lng + ne.lng) / 2;
@@ -26,29 +27,29 @@ function AirportMarkers() {
 
   const map = useMapEvents({
     moveend: () => {
-      const bounds = map.getBounds();
-      let box = boxFromCorners(bounds.getSouthWest(), bounds.getNorthEast());
-      //console.log("Current box:", box);
-      let airports = fetch(`http://localhost:5000/airportsInBox?long=${box.centerLon}&lat=${box.centerLat}&width=${box.widthKm}&height=${box.heightKm}`)
+      const bounds = map.getBounds();      
+      fetch(`http://localhost:5000/airportsInBox?ymin=${bounds.getSouthWest().lat}&xmin=${bounds.getSouthWest().lng}&ymax=${bounds.getNorthEast().lat}&xmax=${bounds.getNorthEast().lng}`)
         .then(response => response.json())
         .then(data => {
-          data["airports"].forEach((airport: any) => 
-            setAirports((prevAirports) => [...prevAirports, {id: airport.id, lat: airport.latitude, lon: airport.longitude}])
-          );
-          //console.log("Airports in box:", data);
+          data["airports"].forEach((airport: any) => {
+          
+            const newAirport = {} as Airport
+            newAirport.id = airport.icao_id
+            newAirport.type = airport.type
+            newAirport.private = airport.private
+            newAirport.lat = airport.latitude
+            newAirport.lon = airport.longitude
+
+            setAirports((prevAirports) => [...prevAirports, newAirport])
+          });
         });
     },
   });
 
   return (
     <>
-      {airports.map((airport: any, idx: number) => (
-        <><Marker
-          key={idx}
-          position={{ lat: airport.lat, lng: airport.lon }}
-        >
-          <AirportMarker airportData={{ id: airport.id, lat: airport.lat, lon: airport.lon }} />
-        </Marker></>
+      {airports.map((airport: Airport, idx: number) => (
+        <AirportMarker airportData={airport} />
       ))}
     </>
   );
@@ -93,7 +94,7 @@ function LocationMarker({ positions, setPositions }: { positions: Position[]; se
 
 export default function MapView() {
   const [positions, setPositions] = useState<Position[]>([])
-
+ //<LocationMarker positions={positions} setPositions={setPositions} />
   return (
     <div>
       <MapContainer center={{ lat: 45.435, lng: -122.7 }} zoom={10} scrollWheelZoom style={{ height: '70vh', width: '100%' }}>
@@ -109,7 +110,7 @@ export default function MapView() {
           url="/resources/tiles/{z}/{x}/{y}.png"
         />
         
-        <LocationMarker positions={positions} setPositions={setPositions} />
+        
         <AirportMarkers />
       </MapContainer>
 

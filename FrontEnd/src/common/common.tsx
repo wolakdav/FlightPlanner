@@ -9,5 +9,12 @@ export interface Airport {
     id: string;
     lat: number;
     lon: number;
-    airspaceDescription?: LatLng[];
+    type: string;
+    private: boolean;
+    name: string;
+    airspaceDescription?: RingDescription[];
+}
+
+export interface RingDescription {
+    point: LatLng[]
 }
