@@ -106,6 +106,7 @@ def _normalize_runway_feature(feature):
         "surface": attributes.get("COMP_CODE"),
         "lighting_active": attributes.get("LIGHTACTV"),
         "lighting_intensity": attributes.get("LIGHTINTNS"),
+        "outline": [],
     }
 
 
@@ -137,10 +138,23 @@ def _fetch_runways(icao_id):
     result = runway_client.query(
         where=f"AIRPORT_ID = '{global_id}'",
         out_fields="*",
-        return_geometry=False
+        out_sr=4326,
+        return_geometry=True
     )
 
-    return [_normalize_runway_feature(feature) for feature in result.features]
+    runways = []
+    for feature in result.features:
+        runway = _normalize_runway_feature(feature)
+
+        rings = feature.geometry.get('rings') if feature.geometry else None
+        if rings:
+            outline = [list(rings[0])]
+            longLatFlipper.flipLatToLong(outline)
+            runway["outline"] = outline[0]
+
+        runways.append(runway)
+
+    return runways
 
 
 def get_detailed_airport_info(icao_id):

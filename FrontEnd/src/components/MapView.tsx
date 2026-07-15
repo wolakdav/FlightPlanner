@@ -11,6 +11,7 @@ function AirportMarkers({ positions, setPositions }: { positions: Position[]; se
   const [airports, setAirports] = useState<Airport[]>([]);
   const [zoomLevel, setZoomLevel] = useState<number>(10);
   const airportNameZoomThreshold = 10;
+  const runwayDetailZoomThreshold = 12;
 
   function isAirportWaypoint(airport: Airport): boolean {
     return positions.some((pos) => pos.latlng.lat === airport.lat && pos.latlng.lng === airport.lon)
@@ -64,6 +65,7 @@ function AirportMarkers({ positions, setPositions }: { positions: Position[]; se
           airportData={airport}
           zoomLevel={zoomLevel}
           showAirportName={zoomLevel >= airportNameZoomThreshold}
+          showRunwayDetail={zoomLevel >= runwayDetailZoomThreshold}
           isWaypoint={isAirportWaypoint(airport)}
           onToggleWaypoint={() => toggleAirportWaypoint(airport)}
         />
