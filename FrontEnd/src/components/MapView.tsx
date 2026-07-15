@@ -1,31 +1,36 @@
-import React, { useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvent } from 'react-leaflet'
-import { useMapEvents } from 'react-leaflet/hooks'
-import L, { LatLng, LeafletMouseEvent } from 'leaflet'
+import React, { useEffect, useState } from 'react'
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet'
+import { LeafletMouseEvent, latLng } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import PositionsList from './PositionsList'
 import { Position } from '../common/common'
-import "leaflet/dist/leaflet.css";
 import AirportMarker from './AirportMarker'
 import { Airport } from '../common/common'
 
-function boxFromCorners(sw: LatLng, ne: LatLng) {
-  const centerLon = (sw.lng + ne.lng) / 2;
-  const centerLat = (sw.lat + ne.lat) / 2;
+function AirportMarkers({ positions, setPositions }: { positions: Position[]; setPositions: React.Dispatch<React.SetStateAction<Position[]>> }) {
+  const [airports, setAirports] = useState<Airport[]>([]);
+  const [zoomLevel, setZoomLevel] = useState<number>(10);
+  const airportNameZoomThreshold = 10;
 
-  // Convert degrees difference to km approximately
-  // 1 degree lat ≈ 111 km
-  const heightKm = (ne.lat - sw.lat) * 111;
-  // 1 degree lon ≈ 111 km * cos(latitude)
-  const widthKm = (ne.lng - sw.lng) * 111 * Math.cos(centerLat * Math.PI / 180);
+  function isAirportWaypoint(airport: Airport): boolean {
+    return positions.some((pos) => pos.latlng.lat === airport.lat && pos.latlng.lng === airport.lon)
+  }
 
-  return { centerLon, centerLat, widthKm, heightKm };
-}
+  function toggleAirportWaypoint(airport: Airport) {
+    setPositions((prevPositions: Position[]) => {
+      const existingWaypointIndex = prevPositions.findIndex((pos) => pos.latlng.lat === airport.lat && pos.latlng.lng === airport.lon)
+      if (existingWaypointIndex >= 0) {
+        return prevPositions.filter((_, index) => index !== existingWaypointIndex)
+      }
 
-function AirportMarkers() {
-  const [airports, setAirports] = useState([]);
+      return [...prevPositions, { latlng: latLng(airport.lat, airport.lon), name: airport.name }]
+    })
+  }
 
   const map = useMapEvents({
+    zoomend: () => {
+      setZoomLevel(map.getZoom());
+    },
     moveend: () => {
       const bounds = map.getBounds();      
       fetch(`/api/airportsInBox?ymin=${bounds.getSouthWest().lat}&xmin=${bounds.getSouthWest().lng}&ymax=${bounds.getNorthEast().lat}&xmax=${bounds.getNorthEast().lng}`)
@@ -47,10 +52,21 @@ function AirportMarkers() {
     },
   });
 
+  useEffect(() => {
+    setZoomLevel(map.getZoom());
+  }, [map]);
+
   return (
     <>
       {airports.map((airport: Airport, idx: number) => (
-        <AirportMarker airportData={airport} />
+        <AirportMarker
+          key={`${airport.id}-${idx}`}
+          airportData={airport}
+          zoomLevel={zoomLevel}
+          showAirportName={zoomLevel >= airportNameZoomThreshold}
+          isWaypoint={isAirportWaypoint(airport)}
+          onToggleWaypoint={() => toggleAirportWaypoint(airport)}
+        />
       ))}
     </>
   );
@@ -95,25 +111,46 @@ function LocationMarker({ positions, setPositions }: { positions: Position[]; se
 
 export default function MapView() {
   const [positions, setPositions] = useState<Position[]>([])
- //<LocationMarker positions={positions} setPositions={setPositions} />
+  const [isWaypointModeEnabled, setIsWaypointModeEnabled] = useState<boolean>(true)
+
   return (
-    <div>
-      <MapContainer center={{ lat: 45.435, lng: -122.7 }} zoom={10} scrollWheelZoom style={{ height: '70vh', width: '100%' }}>
-        {/*
-          Browsers cannot load tiles from a local filesystem path. Use an HTTP(S) URL
-          or a path served by the frontend (place tiles under FrontEnd/public/resources/tiles/)
-          so they are available at: /resources/tiles/{z}/{x}/{y}.png
-          If your backend serves tiles, use the backend URL (e.g. http://localhost:5000/resources/tiles/{z}/{x}/{y}.png)
-          and ensure CORS headers allow requests from the frontend origin.
-        */}
-        <TileLayer
-          attribution='&copy; Tiles'
-          url="/api/resources/tiles/{z}/{x}/{y}.png"
-        />
-        
-        
-        <AirportMarkers />
-      </MapContainer>
+    <div className="map-view-shell">
+      <div className="menu-column">
+        <aside className="side-menu open">
+          <h2>Map Options</h2>
+          <div className="menu-option">
+            <label className="switch" htmlFor="waypoint-toggle">
+              <input
+                id="waypoint-toggle"
+                type="checkbox"
+                checked={isWaypointModeEnabled}
+                onChange={(event) => setIsWaypointModeEnabled(event.target.checked)}
+              />
+              <span className="slider"></span>
+            </label>
+            <span>Waypoints {isWaypointModeEnabled ? 'On' : 'Off'}</span>
+          </div>
+        </aside>
+      </div>
+
+      <div className="map-canvas">
+        <MapContainer center={{ lat: 45.435, lng: -122.7 }} zoom={10} scrollWheelZoom style={{ height: '70vh', width: '100%' }}>
+          {/*
+            Browsers cannot load tiles from a local filesystem path. Use an HTTP(S) URL
+            or a path served by the frontend (place tiles under FrontEnd/public/resources/tiles/)
+            so they are available at: /resources/tiles/{z}/{x}/{y}.png
+            If your backend serves tiles, use the backend URL (e.g. http://localhost:5000/resources/tiles/{z}/{x}/{y}.png)
+            and ensure CORS headers allow requests from the frontend origin.
+          */}
+          <TileLayer
+            attribution='&copy; Tiles'
+            url="/api/resources/tiles/{z}/{x}/{y}.png"
+          />
+
+          {isWaypointModeEnabled && <LocationMarker positions={positions} setPositions={setPositions} />}
+            <AirportMarkers positions={positions} setPositions={setPositions} />
+        </MapContainer>
+      </div>
 
       {/* Positions list rendered outside the map so state is elevated */}
       <PositionsList positions={positions} setPositions={setPositions} />
