@@ -61,6 +61,32 @@ body {
   gap: 0.7rem;
 }
 
+.menu-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(154, 164, 192, 0.2);
+}
+
+.menu-filter-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.menu-checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.menu-range-slider {
+  width: 100%;
+}
+
 .switch {
   position: relative;
   display: inline-block;

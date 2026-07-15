@@ -108,7 +108,31 @@ function markerSizeForZoom(zoomLevel: number) {
   return 12 + ((clampedZoom - 6) / 8) * 18;
 }
 
-function AirportDetails(color: string, airportData: Airport, zoomLevel: number, showAirportName: boolean, showRunwayDetail: boolean) {
+// Sectional chart convention: blue = airport has an operating control tower, magenta = non-towered.
+const TOWERED_SYMBOL_COLOR = '#2563eb'
+const NON_TOWERED_SYMBOL_COLOR = '#c026d3'
+
+// Sectional chart convention: hard-surfaced runways longer than 8,069 ft (or multiple
+// hard-surfaced runways) get the larger airport symbol.
+const LARGE_AIRPORT_HARD_SURFACE_FT = 8069
+
+type AirportSymbolVariant = 'soft' | 'hard-short' | 'hard-long'
+
+function getAirportSymbolVariant(airportData: Airport): AirportSymbolVariant {
+  if (!airportData.hasHardSurfaceRunway) {
+    return 'soft'
+  }
+
+  if (airportData.longestHardSurfaceRunwayFt != null && airportData.longestHardSurfaceRunwayFt >= LARGE_AIRPORT_HARD_SURFACE_FT) {
+    return 'hard-long'
+  }
+
+  return 'hard-short'
+}
+
+function AirportDetails(airportData: Airport, zoomLevel: number, showAirportName: boolean, showRunwayDetail: boolean) {
+  const symbolColor = airportData.towered ? TOWERED_SYMBOL_COLOR : NON_TOWERED_SYMBOL_COLOR
+
   if (showRunwayDetail) {
     return L.divIcon({
       html: `
@@ -116,7 +140,7 @@ function AirportDetails(color: string, airportData: Airport, zoomLevel: number, 
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: ${color};
+          background: ${symbolColor};
           border: 1px solid white;
         "></div>
       `,
@@ -127,39 +151,89 @@ function AirportDetails(color: string, airportData: Airport, zoomLevel: number, 
   }
 
   const markerSize = markerSizeForZoom(zoomLevel);
-  const markerBorder = Math.max(1, Math.round(markerSize * 0.1));
-  const codeFontSize = Math.max(8, Math.round(markerSize * 0.28));
+  const markerBorder = Math.max(1.5, Math.round(markerSize * 0.12));
+  const idFontSize = Math.max(9, Math.round(markerSize * 0.42));
   const nameFontSize = Math.max(10, Math.round(markerSize * 0.5));
+
+  const variant = getAirportSymbolVariant(airportData)
+  const isLargeAirport = variant === 'hard-long'
+  const symbolSize = isLargeAirport ? Math.round(markerSize * 1.35) : markerSize
+  const isFilled = variant !== 'soft'
+  const badgeSize = Math.max(10, Math.round(symbolSize * 0.45))
 
   return L.divIcon({
     html: `
-      <div style="
-        background: ${color};;
-        color: white;
-        width: ${markerSize}px;
-        height: ${markerSize}px;
-        border-radius: 50%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-size: ${codeFontSize}px;
-        border: ${markerBorder}px solid white;
-      ">
-        ${airportData.id}
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <div style="position: relative; width: ${symbolSize}px; height: ${symbolSize}px;">
+          <div style="
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: ${markerBorder}px solid ${symbolColor};
+            background: ${isFilled ? symbolColor : 'transparent'};
+            box-sizing: border-box;
+          "></div>
+          ${isLargeAirport ? `
+            <div style="
+              position: absolute;
+              top: 50%;
+              left: 15%;
+              right: 15%;
+              height: 2px;
+              background: white;
+              transform: translateY(-50%);
+            "></div>
+            <div style="
+              position: absolute;
+              left: 50%;
+              top: 15%;
+              bottom: 15%;
+              width: 2px;
+              background: white;
+              transform: translateX(-50%);
+            "></div>
+          ` : ''}
+          ${airportData.private ? `
+            <div style="
+              position: absolute;
+              top: -${badgeSize * 0.3}px;
+              right: -${badgeSize * 0.3}px;
+              width: ${badgeSize}px;
+              height: ${badgeSize}px;
+              border-radius: 50%;
+              background: white;
+              border: 1px solid ${symbolColor};
+              color: ${symbolColor};
+              font-size: ${Math.max(7, Math.round(badgeSize * 0.62))}px;
+              font-weight: 700;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              line-height: 1;
+            ">R</div>
+          ` : ''}
+        </div>
+        <div style="
+          margin-top: 2px;
+          text-align: center;
+          color: white;
+          font-size: ${idFontSize}px;
+          font-weight: 700;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+          white-space: nowrap;
+        ">${airportData.id}</div>
+        ${showAirportName ? `<div style="
+          text-align: center;
+          color: white;
+          font-size: ${nameFontSize}px;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+          white-space: nowrap;
+        ">${airportData.name}</div>` : ''}
       </div>
-      ${showAirportName ? `<div style="
-        margin-top: 3px;
-        text-align: center;
-        color: white;
-        font-size: ${nameFontSize}px;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
-        white-space: nowrap;
-      ">${airportData.name}</div>` : ''}
     `,
     className: '', // prevents Leaflet default styles
-    iconSize: [markerSize, markerSize],
-    iconAnchor: [markerSize / 2, markerSize / 2],
+    iconSize: [symbolSize, symbolSize],
+    iconAnchor: [symbolSize / 2, symbolSize / 2],
   })
 }
 
@@ -408,11 +482,6 @@ function AirportMarker( { airportData, zoomLevel, showAirportName, showRunwayDet
   const [runways, setRunways] = useState<Runway[]>([])
   const [airspaceRings, setAirspaceRings] = useState<[number, number][][]>([])
   const [isLoadingRunways, setIsLoadingRunways] = useState(false)
-  
-  let color = "blue"
-  if(airportData.private) {
-    color = "red"
-  }
 
   async function loadAirportInfo() {
     setIsLoadingAirportInfo(true)
@@ -503,7 +572,7 @@ function AirportMarker( { airportData, zoomLevel, showAirportName, showRunwayDet
     ))
 
   return (<>
-      <Marker position={[airportData.lat, airportData.lon]} icon={AirportDetails(color, airportData, zoomLevel, showAirportName, showRunwayDetail)} eventHandlers={{
+      <Marker position={[airportData.lat, airportData.lon]} icon={AirportDetails(airportData, zoomLevel, showAirportName, showRunwayDetail)} eventHandlers={{
           click: () => {
             setShowDetails(!showDetails)
             loadAirportInfo()

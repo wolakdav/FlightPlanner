@@ -11,6 +11,10 @@ export interface Airport {
     lon: number;
     type: string;
     private: boolean;
+    towered: boolean;
+    longestRunwayFt: number | null;
+    hasHardSurfaceRunway: boolean;
+    longestHardSurfaceRunwayFt: number | null;
     name: string;
     airspaceDescription?: RingDescription[];
 }

@@ -195,6 +195,70 @@ def get_detailed_airport_info(icao_id):
     return detailed_info
 
 
+TOWERED_AIRSPACE_CLASSES = ("B", "C", "D")
+
+
+def _get_towered_icao_ids_in_box(bounded_box):
+    class_filter = " OR ".join(f"CLASS = '{cls}'" for cls in TOWERED_AIRSPACE_CLASSES)
+
+    result = airspace_client.query(
+        where=f"({class_filter})",
+        out_fields="ICAO_ID",
+        geometry_filter=intersects(bounded_box),
+        return_geometry=False
+    )
+
+    return {
+        feature.attributes.get("ICAO_ID")
+        for feature in result.features
+        if feature.attributes.get("ICAO_ID")
+    }
+
+
+HARD_SURFACE_KEYWORDS = ("ASPH", "CONC", "PFC", "AFSC", "BRICK")
+
+
+def _is_hard_surface(comp_code):
+    if not comp_code:
+        return False
+
+    comp_code_upper = comp_code.upper()
+    return any(keyword in comp_code_upper for keyword in HARD_SURFACE_KEYWORDS)
+
+
+def _get_runway_summary_by_airport_in_box(bounded_box):
+    result = runway_client.query(
+        where="1=1",
+        out_fields="AIRPORT_ID,LENGTH,COMP_CODE",
+        geometry_filter=intersects(bounded_box),
+        return_geometry=False
+    )
+
+    summary = {}
+    for feature in result.features:
+        global_id = feature.attributes.get("AIRPORT_ID")
+        length = feature.attributes.get("LENGTH")
+        comp_code = feature.attributes.get("COMP_CODE")
+        if not global_id or length is None:
+            continue
+
+        entry = summary.setdefault(global_id, {
+            "longest_runway_ft": None,
+            "has_hard_surface": False,
+            "longest_hard_surface_runway_ft": None,
+        })
+
+        if entry["longest_runway_ft"] is None or length > entry["longest_runway_ft"]:
+            entry["longest_runway_ft"] = length
+
+        if _is_hard_surface(comp_code):
+            entry["has_hard_surface"] = True
+            if entry["longest_hard_surface_runway_ft"] is None or length > entry["longest_hard_surface_runway_ft"]:
+                entry["longest_hard_surface_runway_ft"] = length
+
+    return summary
+
+
 def get_all_airports_in_box(xmin, ymin, xmax, ymax):
     boundedBox = Envelope({
         "xmin": xmin,
@@ -211,11 +275,17 @@ def get_all_airports_in_box(xmin, ymin, xmax, ymax):
         geometry_filter=intersects(boundedBox)
     )    
 
+    towered_icao_ids = _get_towered_icao_ids_in_box(boundedBox)
+    runway_summary_by_global_id = _get_runway_summary_by_airport_in_box(boundedBox)
+
     airports = []
     for airport in result:
         if(airport.attributes["OPERSTATUS"] == "OPERATIONAL"):
             normalized_airport = _normalize_airport_feature(airport)
             _cache_airport_info(normalized_airport)
+
+            global_id = (normalized_airport.get("attributes") or {}).get("GLOBAL_ID")
+            runway_summary = runway_summary_by_global_id.get(global_id, {})
 
             airports.append({
                 "icao_id": normalized_airport["icao_id"],
@@ -223,7 +293,11 @@ def get_all_airports_in_box(xmin, ymin, xmax, ymax):
                 "latitude": normalized_airport["latitude"],
                 "type": normalized_airport["type"],
                 "name": normalized_airport["name"],
-                "private": normalized_airport["private"]
+                "private": normalized_airport["private"],
+                "towered": normalized_airport["icao_id"] in towered_icao_ids,
+                "longest_runway_ft": runway_summary.get("longest_runway_ft"),
+                "has_hard_surface_runway": runway_summary.get("has_hard_surface", False),
+                "longest_hard_surface_runway_ft": runway_summary.get("longest_hard_surface_runway_ft")
             })
 
     return airports
