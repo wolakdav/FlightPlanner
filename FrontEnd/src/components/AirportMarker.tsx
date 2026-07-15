@@ -8,7 +8,7 @@ interface AirportMarkerProps {
 
 
 async function getDetailedAirportInfo(icao_id: string): Promise<[number, number][][]> {
-  return await fetch(`http://localhost:5000/detailedAirportInfo?icao_id=${icao_id}`)
+  return await fetch(`/api/detailedAirportInfo?icao_id=${icao_id}`)
   .then(response => response.json())
   .then(data => {
     let allRings = []

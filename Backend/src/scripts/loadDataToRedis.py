@@ -1,6 +1,7 @@
 import requests
 import redis
 import csv
+import os
 
 ##resources\databaseData\airports.csv
 def loadDataFromLocalFile(redisClient, filePath):
@@ -52,11 +53,19 @@ if __name__ == "__main__":
     print("Starting data load to Redis...")
     redisClient = createRedisConnection()
 
-    ##print("Loading airport data from AirportGap API...")
-    ##loadDataFromAirportGap(redisClient)
+    local_csv = "resources/databaseData/airports.csv"
+    if os.path.exists(local_csv):
+        print("Loading airport data from local CSV file...")
+        loadDataFromLocalFile(redisClient, local_csv)
+    else:
+        print(f"Local seed file not found at {local_csv}. Skipping local seed load.")
 
-    print("Loading airport data from local CSV file...")
-    loadDataFromLocalFile(redisClient, "resources/databaseData/airports.csv")
+        # Best-effort fallback so startup can continue even without local CSV data.
+        try:
+            print("Attempting fallback load from AirportGap API...")
+            loadDataFromAirportGap(redisClient)
+        except Exception as exc:
+            print(f"Fallback API seed load failed: {exc}")
 
     print("Testing query...")
     testQuery(redisClient)

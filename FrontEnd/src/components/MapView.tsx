@@ -28,7 +28,7 @@ function AirportMarkers() {
   const map = useMapEvents({
     moveend: () => {
       const bounds = map.getBounds();      
-      fetch(`http://localhost:5000/airportsInBox?ymin=${bounds.getSouthWest().lat}&xmin=${bounds.getSouthWest().lng}&ymax=${bounds.getNorthEast().lat}&xmax=${bounds.getNorthEast().lng}`)
+      fetch(`/api/airportsInBox?ymin=${bounds.getSouthWest().lat}&xmin=${bounds.getSouthWest().lng}&ymax=${bounds.getNorthEast().lat}&xmax=${bounds.getNorthEast().lng}`)
         .then(response => response.json())
         .then(data => {
           data["airports"].forEach((airport: any) => {
@@ -108,7 +108,7 @@ export default function MapView() {
         */}
         <TileLayer
           attribution='&copy; Tiles'
-          url="/resources/tiles/{z}/{x}/{y}.png"
+          url="/api/resources/tiles/{z}/{x}/{y}.png"
         />
         
         
