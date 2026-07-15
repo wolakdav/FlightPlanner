@@ -15,6 +15,11 @@ airspace_client = FeatureLayer(airspace_layer_url)
 airport_layer_url = "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/arcgis/rest/services/US_Airport/FeatureServer/0"
 airport_client = FeatureLayer(airport_layer_url)
 
+runway_layer_url = "https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/ArcGIS/rest/services/Runways/FeatureServer/0"
+runway_client = FeatureLayer(runway_layer_url)
+
+DETAILED_AIRPORT_INFO_TTL_SECONDS = 15 * 60
+
 
 def get_airport_metar(icao_id):
     query_params = parse.urlencode({
@@ -86,32 +91,94 @@ def get_airport_info_from_redis(icao_id):
     _cache_airport_info(airport_info)
     return airport_info
 
+def _detailed_airport_cache_key(icao_id):
+    return f"airport:detailed:{icao_id}"
+
+
+def _normalize_runway_feature(feature):
+    attributes = feature.attributes
+
+    return {
+        "designator": attributes.get("DESIGNATOR"),
+        "length": attributes.get("LENGTH"),
+        "width": attributes.get("WIDTH"),
+        "dimension_uom": attributes.get("DIM_UOM"),
+        "surface": attributes.get("COMP_CODE"),
+        "lighting_active": attributes.get("LIGHTACTV"),
+        "lighting_intensity": attributes.get("LIGHTINTNS"),
+    }
+
+
+def _fetch_airspace_geometry(icao_id):
+    result = airspace_client.query(
+        where=f"ICAO_ID = '{icao_id}'",
+        out_fields="",
+        out_sr=4326,
+        return_geometry=True
+    )
+
+    allAirspaces = []
+    for feature in result.features:
+        allAirspaces.append(feature.geometry['rings'][0])
+
+    longLatFlipper.flipLatToLong(allAirspaces)
+    return allAirspaces
+
+
+def _fetch_runways(icao_id):
+    airport_info = get_airport_info_from_redis(icao_id)
+    if airport_info is None:
+        return []
+
+    global_id = (airport_info.get("attributes") or {}).get("GLOBAL_ID")
+    if not global_id:
+        return []
+
+    result = runway_client.query(
+        where=f"AIRPORT_ID = '{global_id}'",
+        out_fields="*",
+        return_geometry=False
+    )
+
+    return [_normalize_runway_feature(feature) for feature in result.features]
+
+
 def get_detailed_airport_info(icao_id):
-    
+
     print("Querying for ICAO ID Airspaces: ", icao_id)
 
-    airSpaceGeometry = redisClient.get(icao_id)
+    cache_key = _detailed_airport_cache_key(icao_id)
+    cached_raw = redisClient.get(cache_key)
 
-    if(airSpaceGeometry is None):
+    detailed_info = {}
+    if cached_raw:
+        print("Found something in cache for ", icao_id)
+        if isinstance(cached_raw, bytes):
+            cached_raw = cached_raw.decode("utf-8")
+        detailed_info = json.loads(cached_raw)
+    else:
         print("Did not find anything in cache for ", icao_id)
-        result = airspace_client.query(
-            where=f"ICAO_ID = '{icao_id}'",
-            out_fields="",
-            out_sr=4326,
-            return_geometry=True
+
+    needs_cache_refresh = False
+
+    if "geometry" not in detailed_info:
+        print("Airspace geometry missing from cache for ", icao_id)
+        detailed_info["geometry"] = _fetch_airspace_geometry(icao_id)
+        needs_cache_refresh = True
+
+    if "runways" not in detailed_info:
+        print("Runway info missing from cache for ", icao_id)
+        detailed_info["runways"] = _fetch_runways(icao_id)
+        needs_cache_refresh = True
+
+    if needs_cache_refresh:
+        redisClient.set(
+            cache_key,
+            json.dumps(detailed_info),
+            ex=DETAILED_AIRPORT_INFO_TTL_SECONDS
         )
 
-        allAirspaces = []
-        for feature in result.features:
-            allAirspaces.append(feature.geometry['rings'][0])
-
-        longLatFlipper.flipLatToLong(allAirspaces)
-
-        airSpaceGeometry = {'geometry': allAirspaces}
-    else:
-        print("Found something in cache for ", icao_id)
-    
-    return airSpaceGeometry
+    return detailed_info
 
 
 def get_all_airports_in_box(xmin, ymin, xmax, ymax):

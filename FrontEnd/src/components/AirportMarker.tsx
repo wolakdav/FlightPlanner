@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import L from 'leaflet'
 import { Marker, Polyline, Popup } from 'react-leaflet'
 import { Airport } from '../common/common'
@@ -21,6 +21,21 @@ interface AirportInfoResponse {
 
 interface MetarResponse {
   metar: string | null;
+}
+
+interface Runway {
+  designator: string | null;
+  length: number | null;
+  width: number | null;
+  dimension_uom: string | null;
+  surface: string | null;
+  lighting_active: number | null;
+  lighting_intensity: string | null;
+}
+
+interface DetailedAirportInfoResponse {
+  geometry: [number, number][][];
+  runways: Runway[];
 }
 
 const FILTERED_TOP_LEVEL_KEYS = new Set(['type'])
@@ -48,19 +63,32 @@ const KEY_LABEL_OVERRIDES: Record<string, string> = {
 }
 
 
-async function getDetailedAirportInfo(icao_id: string): Promise<[number, number][][]> {
+async function getDetailedAirportInfo(icao_id: string): Promise<DetailedAirportInfoResponse> {
   return await fetch(`/api/detailedAirportInfo?icao_id=${icao_id}`)
   .then(response => response.json())
-  .then(data => {
-    let allRings: [number, number][][] = []
-    //console.log("Received airspace data:", data);
-    data["geometry"].forEach((rawRings: [number, number][]) => {
-        //console.log("Ring latLngs:", rawRings);
-        allRings = allRings.concat([rawRings]);
-    });
+  .then(data => ({
+    geometry: Array.isArray(data?.geometry) ? data.geometry : [],
+    runways: Array.isArray(data?.runways) ? data.runways : [],
+  }));
+}
 
-    return allRings
-  });
+function formatRunway(runway: Runway): string {
+  const parts: string[] = []
+  const uom = runway.dimension_uom ? ` ${runway.dimension_uom}` : ''
+
+  if (runway.length && runway.width) {
+    parts.push(`${runway.length}${uom} x ${runway.width}${uom}`)
+  }
+
+  if (runway.surface) {
+    parts.push(runway.surface)
+  }
+
+  if (runway.lighting_active) {
+    parts.push(runway.lighting_intensity ? `Lighted (${runway.lighting_intensity})` : 'Lighted')
+  }
+
+  return parts.length > 0 ? parts.join(' \u00b7 ') : 'No details available'
 }
 
 function markerSizeForZoom(zoomLevel: number) {
@@ -152,23 +180,12 @@ function toDisplayLabel(key: string): string {
     .join(' ')
 }
 
-function DisplayAirspace({ airportData }: { airportData: Airport }) {
-
-  const [ringDescriptions, setRingDescriptions] = useState<React.ReactElement[]>([]);
-
-  if(airportData == undefined) {
+function DisplayAirspace({ rings }: { rings: [number, number][][] }) {
+  if (!rings || rings.length === 0) {
     return <> </>
   }
-  useEffect(() => {
-    async function fetchRings() {
-      const allRings = await getDetailedAirportInfo(airportData.id)
-      setRingDescriptions([<Polyline positions={allRings}/>])
-    }
 
-    fetchRings()
-  }, [airportData])
-
-  return <>{ringDescriptions}</>;
+  return <Polyline positions={rings}/>;
 }
 
 
@@ -179,6 +196,9 @@ function AirportMarker( { airportData, zoomLevel, showAirportName, isWaypoint, o
   const [airportInfoError, setAirportInfoError] = useState<string | null>(null)
   const [metarText, setMetarText] = useState<string | null>(null)
   const [isLoadingMetar, setIsLoadingMetar] = useState(false)
+  const [runways, setRunways] = useState<Runway[]>([])
+  const [airspaceRings, setAirspaceRings] = useState<[number, number][][]>([])
+  const [isLoadingRunways, setIsLoadingRunways] = useState(false)
   
   let color = "blue"
   if(airportData.private) {
@@ -222,6 +242,21 @@ function AirportMarker( { airportData, zoomLevel, showAirportName, isWaypoint, o
     }
   }
 
+  async function loadDetailedAirportInfo() {
+    setIsLoadingRunways(true)
+
+    try {
+      const data = await getDetailedAirportInfo(airportData.id)
+      setAirspaceRings(data.geometry)
+      setRunways(data.runways)
+    } catch (_) {
+      setAirspaceRings([])
+      setRunways([])
+    } finally {
+      setIsLoadingRunways(false)
+    }
+  }
+
   const airportName = typeof airportInfo?.name === 'string' ? airportInfo.name : airportData.name
   const airportAttributes = (airportInfo?.attributes || {}) as Record<string, unknown>
 
@@ -258,9 +293,10 @@ function AirportMarker( { airportData, zoomLevel, showAirportName, isWaypoint, o
             setShowDetails(!showDetails)
             loadAirportInfo()
             loadAirportMetar()
+            loadDetailedAirportInfo()
           }
         }}>
-        {showDetails && <DisplayAirspace airportData={airportData}/>}
+        {showDetails && <DisplayAirspace rings={airspaceRings}/>}
 
         <Popup>
           <div className="airport-popup">
@@ -288,6 +324,20 @@ function AirportMarker( { airportData, zoomLevel, showAirportName, isWaypoint, o
                   <div className="airport-weather-value">
                     {isLoadingMetar ? 'Loading METAR...' : (metarText || 'No METAR Reported')}
                   </div>
+                </div>
+
+                <div className="airport-runways-section">
+                  <span className="airport-runways-title">Runways</span>
+                  {isLoadingRunways && <div className="airport-runways-value">Loading runways...</div>}
+                  {!isLoadingRunways && runways.length === 0 && (
+                    <div className="airport-runways-value">No runway data available</div>
+                  )}
+                  {!isLoadingRunways && runways.map((runway, index) => (
+                    <div key={`${runway.designator ?? 'runway'}-${index}`} className="airport-detail-row">
+                      <span className="airport-detail-key">{runway.designator || 'Runway'}</span>
+                      <span className="airport-detail-value">{formatRunway(runway)}</span>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="airport-detail-row">

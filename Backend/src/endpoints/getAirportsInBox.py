@@ -15,9 +15,9 @@ def register_routes(app):
             return jsonify()
 
         print("Querying for ICAO ID: ", icao_id)
-        airSpaceGeometry = faaArcGisClient.get_detailed_airport_info(icao_id)
+        detailed_airport_info = faaArcGisClient.get_detailed_airport_info(icao_id)
 
-        response = jsonify(airSpaceGeometry)
+        response = jsonify(detailed_airport_info)
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
 

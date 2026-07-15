@@ -205,6 +205,30 @@ button {
   word-break: break-word;
 }
 
+.airport-runways-section {
+  margin-bottom: 0.4rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 6px;
+  background: rgba(241, 245, 249, 0.65);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.airport-runways-title {
+  display: block;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.2rem;
+}
+
+.airport-runways-value {
+  color: #0f172a;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
 .airport-detail-row {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
